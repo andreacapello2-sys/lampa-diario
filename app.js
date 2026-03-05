@@ -45,6 +45,7 @@ function leggiTokenDaURL() {
 window.addEventListener("load", async () => {
   if (leggiTokenDaURL()) {
     mostraSchermata("screen-main");
+    window.scrollTo(0, 0);
     await inizializzaFoglio();
     caricaArchivio();
   }
