@@ -6,30 +6,49 @@ let datiRaccolti = {};
 let faseCorrente = 0;
 let archivioEsistente = [];
 
-const FASI = [
-  "stile","tipo","colore","luogo","data","prezzo","descrizione","interventi"
-];
-
-// ── AUTH ─────────────────────────────────────────────────────────────────────
+// ── AUTH (redirect flow) ──────────────────────────────────────────────────────
 function handleLogin() {
-  const client = google.accounts.oauth2.initTokenClient({
+  const params = new URLSearchParams({
     client_id: CONFIG.CLIENT_ID,
+    redirect_uri: CONFIG.REDIRECT_URI,
+    response_type: "token",
     scope: CONFIG.SCOPES,
-    callback: async (resp) => {
-      if (resp.error) { alert("Errore login: " + resp.error); return; }
-      accessToken = resp.access_token;
-      mostraSchermata("screen-main");
-      await inizializzaFoglio();
-      caricaArchivio();
-    }
+    include_granted_scopes: "true"
   });
-  client.requestAccessToken();
+  window.location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
 }
 
 function handleLogout() {
   accessToken = null; spreadsheetId = null;
+  sessionStorage.removeItem("gtoken");
   mostraSchermata("screen-login");
 }
+
+function leggiTokenDaURL() {
+  const hash = window.location.hash.substring(1);
+  const params = new URLSearchParams(hash);
+  const token = params.get("access_token");
+  if (token) {
+    accessToken = token;
+    sessionStorage.setItem("gtoken", token);
+    // Pulisci l'URL
+    history.replaceState(null, "", window.location.pathname);
+    return true;
+  }
+  // Controlla sessionStorage
+  const saved = sessionStorage.getItem("gtoken");
+  if (saved) { accessToken = saved; return true; }
+  return false;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener("load", async () => {
+  if (leggiTokenDaURL()) {
+    mostraSchermata("screen-main");
+    await inizializzaFoglio();
+    caricaArchivio();
+  }
+});
 
 // ── UTILS UI ─────────────────────────────────────────────────────────────────
 function mostraSchermata(id) {
