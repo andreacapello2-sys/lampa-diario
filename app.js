@@ -325,6 +325,51 @@ function generaID(stileCodice, tipoCodice) {
   return prefisso + String(max + 1).padStart(3, "0");
 }
 
+// ── VOCE ──────────────────────────────────────────────────────────────────────
+let recognition = null;
+let isRecording = false;
+
+function inizializzaVoce() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById("btn-mic").style.display = "none";
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = "it-IT";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onresult = (e) => {
+    const testo = e.results[0][0].transcript;
+    document.getElementById("chat-input").value = testo;
+    stopVoce();
+    inviaRisposta();
+  };
+  recognition.onerror = () => stopVoce();
+  recognition.onend = () => stopVoce();
+}
+
+function toggleVoce() {
+  if (!recognition) inizializzaVoce();
+  if (!recognition) return;
+  isRecording ? stopVoce() : startVoce();
+}
+
+function startVoce() {
+  isRecording = true;
+  document.getElementById("btn-mic").classList.add("recording");
+  document.getElementById("btn-mic").textContent = "⏹";
+  recognition.start();
+}
+
+function stopVoce() {
+  isRecording = false;
+  const btn = document.getElementById("btn-mic");
+  if (btn) { btn.classList.remove("recording"); btn.textContent = "🎤"; }
+  try { recognition.stop(); } catch(e) {}
+}
+
 // ── ANALISI IMMAGINE — disabilitata, descrizione manuale ──────────────────────
 
 // ── SALVATAGGIO ───────────────────────────────────────────────────────────────
