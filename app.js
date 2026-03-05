@@ -468,6 +468,7 @@ async function salvaRecord() {
   await salvaFotoSuDrive(id);
   archivioEsistente.push(riga);
 
+  stopVoce();
   rimuoviLoading();
   aggiungiMessaggio(`✅ Lampada archiviata con ID <strong>${id}</strong>!\nFoto salvata in "Archivio Lampade - Foto" su Drive.\n\nVuoi catalogare un'altra lampada?`, "bot");
 
