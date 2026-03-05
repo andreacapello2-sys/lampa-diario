@@ -284,14 +284,22 @@ async function elaboraRisposta(testo) {
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function interpretaCodice(testo, mappa) {
-  const t = testo.trim().toLowerCase();
-  // Cerca per codice
+  const t = testo.trim().toLowerCase()
+    .replace(/^zero\s*/i, "0")
+    .replace(/\bzero\b/gi, "0");
+
+  // Cerca per nome (priorità)
   for (const [k, v] of Object.entries(mappa)) {
-    if (t === k) return { codice: k, nome: v };
+    if (t === v.toLowerCase() || t.includes(v.toLowerCase()) || v.toLowerCase().includes(t)) {
+      return { codice: k, nome: v };
+    }
   }
-  // Cerca per nome
+  // Cerca per codice numerico (es. "5" → "05", "1" → "01")
   for (const [k, v] of Object.entries(mappa)) {
-    if (t === v.toLowerCase() || v.toLowerCase().includes(t)) return { codice: k, nome: v };
+    const num = parseInt(k).toString(); // "05" → "5"
+    if (t === k || t === num || t.includes(num)) {
+      return { codice: k, nome: v };
+    }
   }
   return null;
 }
@@ -328,6 +336,7 @@ function generaID(stileCodice, tipoCodice) {
 // ── VOCE ──────────────────────────────────────────────────────────────────────
 let recognition = null;
 let isRecording = false;
+let voceAttiva = false; // modalità microfono continuo
 
 function inizializzaVoce() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -343,31 +352,58 @@ function inizializzaVoce() {
   recognition.onresult = (e) => {
     const testo = e.results[0][0].transcript;
     document.getElementById("chat-input").value = testo;
-    stopVoce();
+    isRecording = false;
+    aggiornaStatoMic();
     inviaRisposta();
   };
-  recognition.onerror = () => stopVoce();
-  recognition.onend = () => stopVoce();
+  recognition.onerror = () => { isRecording = false; aggiornaStatoMic(); };
+  recognition.onend = () => {
+    isRecording = false;
+    aggiornaStatoMic();
+    // Se la modalità continua è attiva, riavvia automaticamente
+    if (voceAttiva) setTimeout(() => avviaAscolto(), 600);
+  };
 }
 
 function toggleVoce() {
   if (!recognition) inizializzaVoce();
   if (!recognition) return;
-  isRecording ? stopVoce() : startVoce();
+  voceAttiva = !voceAttiva;
+  if (voceAttiva) {
+    avviaAscolto();
+    aggiungiMessaggio("🎤 Modalità vocale attiva — parla dopo ogni domanda.", "bot");
+  } else {
+    stopVoce();
+    aggiungiMessaggio("🔇 Modalità vocale disattivata.", "bot");
+  }
 }
 
-function startVoce() {
-  isRecording = true;
-  document.getElementById("btn-mic").classList.add("recording");
-  document.getElementById("btn-mic").textContent = "⏹";
-  recognition.start();
+function avviaAscolto() {
+  if (!voceAttiva || isRecording) return;
+  try {
+    isRecording = true;
+    aggiornaStatoMic();
+    recognition.start();
+  } catch(e) { isRecording = false; }
 }
 
 function stopVoce() {
+  voceAttiva = false;
   isRecording = false;
-  const btn = document.getElementById("btn-mic");
-  if (btn) { btn.classList.remove("recording"); btn.textContent = "🎤"; }
+  aggiornaStatoMic();
   try { recognition.stop(); } catch(e) {}
+}
+
+function aggiornaStatoMic() {
+  const btn = document.getElementById("btn-mic");
+  if (!btn) return;
+  if (voceAttiva && isRecording) {
+    btn.textContent = "⏹"; btn.classList.add("recording");
+  } else if (voceAttiva) {
+    btn.textContent = "🔊"; btn.classList.remove("recording");
+  } else {
+    btn.textContent = "🎤"; btn.classList.remove("recording");
+  }
 }
 
 // ── ANALISI IMMAGINE — disabilitata, descrizione manuale ──────────────────────
