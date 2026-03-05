@@ -206,11 +206,7 @@ function chiediCampo(fase) {
 }
 
 async function chiediDescrizione() {
-  aggiungiMessaggio("Sto analizzando l'immagine per proporre una descrizione...", "loading");
-  const desc = await analizzaImmagine();
-  rimuoviLoading();
-  aggiungiMessaggio(`Ecco la descrizione proposta:\n\n<em>"${desc}"</em>\n\nConfermi o vuoi modificarla?`, "bot");
-  datiRaccolti._descrizioneProposta = desc;
+  aggiungiMessaggio("Inserisci una <strong>descrizione</strong> della lampada (materiali, forma, caratteristiche principali).", "bot");
   faseCorrente = 6;
 }
 
@@ -255,12 +251,7 @@ async function elaboraRisposta(testo) {
     case 5: datiRaccolti.prezzo = testo; await chiediDescrizione(); break;
 
     case 6: // descrizione
-      const testoLower = testo.toLowerCase();
-      if (testoLower === "sì" || testoLower === "si" || testoLower === "ok" || testoLower === "confermo") {
-        datiRaccolti.descrizione = datiRaccolti._descrizioneProposta;
-      } else {
-        datiRaccolti.descrizione = testo;
-      }
+      datiRaccolti.descrizione = testo;
       chiediCampo(7);
       break;
 
@@ -314,34 +305,7 @@ function generaID(stileCodice, tipoCodice) {
   return prefisso + String(max + 1).padStart(3, "0");
 }
 
-// ── ANALISI IMMAGINE (Claude API) ─────────────────────────────────────────────
-async function analizzaImmagine() {
-  try {
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": CONFIG.ANTHROPIC_API_KEY || "",
-        "anthropic-version": "2023-06-01"
-      },
-      body: JSON.stringify({
-        model: "claude-opus-4-20250514",
-        max_tokens: 200,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: "image/jpeg", data: fotoBase64 } },
-            { type: "text", text: "Descrivi brevemente questa lampada in 1-2 frasi, indicando materiali, forma e caratteristiche visibili. Sii conciso e preciso." }
-          ]
-        }]
-      })
-    });
-    const data = await resp.json();
-    return data.content?.[0]?.text || "Lampada fotografata dall'utente.";
-  } catch(e) {
-    return "Lampada fotografata dall'utente.";
-  }
-}
+// ── ANALISI IMMAGINE — disabilitata, descrizione manuale ──────────────────────
 
 // ── SALVATAGGIO ───────────────────────────────────────────────────────────────
 async function salvaRecord() {
