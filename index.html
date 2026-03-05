@@ -47,7 +47,8 @@
         <div id="chat-container" style="display:none">
           <div id="chat-messages"></div>
           <div id="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Scrivi qui..." onkeydown="if(event.key==='Enter') inviaRisposta()"/>
+            <input type="text" id="chat-input" placeholder="Scrivi oppure usa il microfono..." onkeydown="if(event.key==='Enter') inviaRisposta()"/>
+            <button id="btn-mic" onclick="toggleVoce()" title="Parla">🎤</button>
             <button onclick="inviaRisposta()">Invia</button>
           </div>
         </div>
