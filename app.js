@@ -94,7 +94,6 @@ async function sheetsRequest(method, url, body) {
 }
 
 async function inizializzaFoglio() {
-  // Cerca foglio esistente
   const q = encodeURIComponent(`name='${CONFIG.SPREADSHEET_TITLE}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`);
   const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`, {
     headers: { "Authorization": "Bearer " + accessToken }
@@ -104,18 +103,17 @@ async function inizializzaFoglio() {
   if (data.files && data.files.length > 0) {
     spreadsheetId = data.files[0].id;
   } else {
-    // Crea nuovo foglio
     const nuovo = await sheetsRequest("POST", "https://sheets.googleapis.com/v4/spreadsheets", {
       properties: { title: CONFIG.SPREADSHEET_TITLE },
       sheets: [{ properties: { title: CONFIG.SHEET_NAME } }]
     });
     spreadsheetId = nuovo.spreadsheetId;
-    // Intestazioni
     await sheetsRequest("PUT",
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${CONFIG.SHEET_NAME}!A1?valueInputOption=RAW`,
       { values: [CONFIG.COLONNE] }
     );
   }
+  await inizializzaCartella();
 }
 
 async function leggiArchivio() {
@@ -406,7 +404,47 @@ function aggiornaStatoMic() {
   }
 }
 
-// ── ANALISI IMMAGINE — disabilitata, descrizione manuale ──────────────────────
+// ── GOOGLE DRIVE FOTO ─────────────────────────────────────────────────────────
+let fotoCartellaId = null;
+let fotoMimeType = "image/jpeg";
+
+async function inizializzaCartella() {
+  const q = encodeURIComponent(`name='Archivio Lampade - Foto' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}`, {
+    headers: { "Authorization": "Bearer " + accessToken }
+  });
+  const data = await res.json();
+  if (data.files && data.files.length > 0) {
+    fotoCartellaId = data.files[0].id;
+  } else {
+    const nuova = await fetch("https://www.googleapis.com/drive/v3/files", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + accessToken, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Archivio Lampade - Foto", mimeType: "application/vnd.google-apps.folder" })
+    });
+    const d = await nuova.json();
+    fotoCartellaId = d.id;
+  }
+}
+
+async function salvaFotoSuDrive(id) {
+  if (!fotoBase64 || !fotoCartellaId) return;
+  const binary = atob(fotoBase64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+  const blob = new Blob([arr], { type: fotoMimeType });
+
+  const metadata = JSON.stringify({ name: id + ".jpg", parents: [fotoCartellaId] });
+  const form = new FormData();
+  form.append("metadata", new Blob([metadata], { type: "application/json" }));
+  form.append("file", blob);
+
+  await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + accessToken },
+    body: form
+  });
+}
 
 // ── SALVATAGGIO ───────────────────────────────────────────────────────────────
 async function salvaRecord() {
@@ -427,12 +465,12 @@ async function salvaRecord() {
   ];
 
   await aggiungiRiga(riga);
+  await salvaFotoSuDrive(id);
   archivioEsistente.push(riga);
 
   rimuoviLoading();
-  aggiungiMessaggio(`✅ Lampada archiviata con ID <strong>${id}</strong>!\n\nVuoi catalogare un'altra lampada?`, "bot");
+  aggiungiMessaggio(`✅ Lampada archiviata con ID <strong>${id}</strong>!\nFoto salvata in "Archivio Lampade - Foto" su Drive.\n\nVuoi catalogare un'altra lampada?`, "bot");
 
-  // Pulsante nuova lampada
   const btn = document.createElement("button");
   btn.textContent = "📷 Nuova lampada";
   btn.style.cssText = "margin-top:12px;padding:10px 20px;background:#1a1a2e;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.95rem;";
