@@ -83,7 +83,13 @@ header h1 { font-size: 1.2rem; }
 #chat-input {
   flex: 1; border: none; padding: 14px; font-size: 0.95rem; outline: none;
 }
-#chat-input-area button {
+#btn-mic {
+  background: transparent; border: none; border-left: 1px solid #eee;
+  padding: 14px 12px; cursor: pointer; font-size: 1.2rem; transition: background 0.2s;
+}
+#btn-mic.recording { background: #ffe0e0; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+#chat-input-area button:last-child {
   background: #1a1a2e; color: white; border: none;
   padding: 14px 20px; cursor: pointer; font-size: 0.95rem;
 }
