@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lampa-diario</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- SCHERMATA LOGIN -->
+  <div id="screen-login" class="screen active">
+    <div class="login-box">
+      <h1>💡 Lampa-diario</h1>
+      <p>Il tuo archivio personale di lampade</p>
+      <button id="btn-login" onclick="handleLogin()">Accedi con Google</button>
+    </div>
+  </div>
+
+  <!-- SCHERMATA PRINCIPALE -->
+  <div id="screen-main" class="screen">
+    <header>
+      <h1>💡 Lampa-diario</h1>
+      <button id="btn-logout" onclick="handleLogout()">Esci</button>
+    </header>
+
+    <div id="main-content">
+
+      <!-- TAB NAVIGAZIONE -->
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('tab-nuova')">+ Nuova lampada</button>
+        <button class="tab" onclick="showTab('tab-archivio')">Archivio</button>
+      </div>
+
+      <!-- TAB NUOVA LAMPADA -->
+      <div id="tab-nuova" class="tab-content active">
+        <div id="upload-area">
+          <label for="foto-input" id="upload-label">
+            <span>📷</span>
+            <p>Carica una immagine e segui le istruzioni della chat.</p>
+          </label>
+          <input type="file" id="foto-input" accept="image/*" capture="environment" onchange="onFotoCaricata(event)"/>
+        </div>
+        <div id="preview-container" style="display:none">
+          <img id="foto-preview" src="" alt="Anteprima lampada"/>
+        </div>
+        <div id="chat-container" style="display:none">
+          <div id="chat-messages"></div>
+          <div id="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Scrivi qui..." onkeydown="if(event.key==='Enter') inviaRisposta()"/>
+            <button onclick="inviaRisposta()">Invia</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB ARCHIVIO -->
+      <div id="tab-archivio" class="tab-content">
+        <div id="archivio-container">
+          <p id="archivio-loading">Caricamento archivio...</p>
+          <table id="archivio-table" style="display:none">
+            <thead>
+              <tr>
+                <th>ID</th><th>Stile</th><th>Tipo</th><th>Colore</th>
+                <th>Luogo</th><th>Data</th><th>Prezzo</th><th>Descrizione</th><th>Interventi</th>
+              </tr>
+            </thead>
+            <tbody id="archivio-body"></tbody>
+          </table>
+          <button id="btn-export" onclick="esportaExcel()" style="display:none">⬇ Scarica Excel</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script src="https://accounts.google.com/gsi/client"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
