@@ -7,12 +7,12 @@ body {
   min-height: 100vh;
 }
 
-.screen { display: none; }
-.screen.active { display: block; }
+.screen { display: none !important; }
+.screen.active { display: block !important; }
 
 /* LOGIN */
-#screen-login {
-  display: flex; align-items: center; justify-content: center;
+#screen-login.active {
+  display: flex !important; align-items: center; justify-content: center;
   min-height: 100vh; background: linear-gradient(135deg, #1a1a2e, #16213e);
 }
 .login-box {
@@ -63,7 +63,8 @@ header h1 { font-size: 1.2rem; }
 
 /* PREVIEW */
 #foto-preview {
-  width: 100%; height: auto; max-height: 400px; object-fit: contain;
+  display: block; width: 100%; height: auto;
+  max-width: 100%; max-height: 500px; object-fit: contain;
   border-radius: 10px; margin-bottom: 16px; background: #f0f0f0;
 }
 
